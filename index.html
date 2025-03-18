@@ -3,28 +3,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   </head>
   <body>
-    <a-scene mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind;" 
+    <a-scene mindar-image="imageTargetSrc: https://dhkyzhpqoreeytuyeioj.supabase.co/storage/v1/object/public/ar-content//targets.mind;" 
              color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
              vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
       
       <a-assets>
-        <img id="card" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png" />
-        <img id="image1" src="lol.jpg" />
-        <img id="image2" src="https://example.com/image2.jpg" />
         <a-asset-item id="avatarModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/softmind/scene.gltf"></a-asset-item>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-      <a-entity mindar-image-target="targetIndex: 0">
-        <a-plane src="#card" position="0 0 0" height="0.552" width="1" rotation="0 0 0"></a-plane>
-        
-        <!-- Display Image dynamically -->
-        <a-plane id="displayImage" src="#image1" position="0 0.2 0" height="0.5" width="0.5"></a-plane>
-        
-        <!-- Display Text dynamically -->
+      <a-entity mindar-image-target="targetIndex: 0" id="targetEntity">
+        <a-plane id="displayImage" position="0 0.2 0" height="0.5" width="0.5"></a-plane>
         <a-text id="displayText" value="" position="0 0.5 0" align="center" color="white" scale="0.5 0.5 0.5"></a-text>
         
         <!-- Lighting for better visibility -->
@@ -39,27 +32,43 @@
     </a-scene>
     
     <script>
-      // Predefined images stored in the system with corresponding names
-      const storedImages = {
-        "lol.jpg": "This is Image 1",
-        "https://example.com/image2.jpg": "This is Image 2"
-      };
+      // Initialize Supabase
+      const SUPABASE_URL = "https://dhkyzhpqoreeytuyeioj.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoa3l6aHBxb3JlZXl0dXllaW9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIwNjE4MjUsImV4cCI6MjA1NzYzNzgyNX0.8XJ5Jd4MX0bKRbJIjyypayz-yja5LsWmgzYIZGBxm2U";
+      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       
-      function updateTextAndImage(detectedImage) {
+      let storedImages = {}; // This will hold image data from Supabase
+      
+      async function fetchImagesFromSupabase() {
+        let { data, error } = await supabase.from("images").select("id, image_url, description");
+        
+        if (error) {
+          console.error("Error fetching images:", error);
+          return;
+        }
+        
+        // Store images in an object with id as key
+        data.forEach(item => {
+          storedImages[item.id] = { src: item.image_url, text: item.description };
+        });
+      }
+      
+      // Fetch images on page load
+      fetchImagesFromSupabase();
+      
+      document.querySelector("a-scene").addEventListener("targetFound", (event) => {
+        const targetIndex = event.detail.index.toString(); // Get detected image index
         const textEntity = document.getElementById("displayText");
         const imageEntity = document.getElementById("displayImage");
         
-        if (storedImages[detectedImage]) {
-          textEntity.setAttribute("value", storedImages[detectedImage]);
-          imageEntity.setAttribute("src", detectedImage);
+        if (storedImages[targetIndex]) {
+          textEntity.setAttribute("value", storedImages[targetIndex].text);
+          imageEntity.setAttribute("src", storedImages[targetIndex].src);
         } else {
           textEntity.setAttribute("value", "Unknown Image");
           imageEntity.setAttribute("src", "");
         }
-      }
-
-      // Example call to update the text and image (replace with actual detection logic)
-      updateTextAndImage("lol.jpg");
+      });
     </script>
   </body>
 </html>
