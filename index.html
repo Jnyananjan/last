@@ -7,7 +7,7 @@
   </head>
   <body>
     <a-scene 
-      mindar-image="imageTargetSrc: https://dhkyzhpqoreeytuyeioj.supabase.co/storage/v1/object/public/ar-content//targets.mind;" 
+      mindar-image="imageTargetSrc: https://dhkyzhpqoreeytuyeioj.supabase.co/storage/v1/object/public/ar-content/targets.mind;" 
       color-space="sRGB" 
       renderer="colorManagement: true, physicallyCorrectLights" 
       vr-mode-ui="enabled: false" 
@@ -16,15 +16,19 @@
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0" id="targetEntity">
-        <!-- Display Text -->
-        <a-text 
-          id="displayText" 
-          value="Detecting..." 
-          position="0 0.5 0" 
-          align="center" 
-          color="white" 
-          scale="1.5 1.5 1.5"
-        ></a-text>
+        <!-- Video Plane -->
+        <a-video 
+          id="videoPlayer" 
+          src="https://dhkyzhpqoreeytuyeioj.supabase.co/storage/v1/object/public/ar-content/video.mp4" 
+          position="0 0 0" 
+          width="1.5" 
+          height="1" 
+          visible="false" 
+          autoplay
+          loop
+          webkit-playsinline
+          playsinline
+        ></a-video>
 
         <!-- Lighting for better visibility -->
         <a-light type="directional" position="1 1 1" intensity="1.5"></a-light>
@@ -33,47 +37,16 @@
     </a-scene>
 
     <script>
-      // Initialize Supabase
-      const SUPABASE_URL = "https://dhkyzhpqoreeytuyeioj.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoa3l6aHBxb3JlZXl0dXllaW9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIwNjE4MjUsImV4cCI6MjA1NzYzNzgyNX0.8XJ5Jd4MX0bKRbJIjyypayz-yja5LsWmgzYIZGBxm2U";
-      const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-      let storedTexts = {}; // Store text data from Supabase
-
-      // Fetch text from Supabase
-      async function fetchTextFromSupabase() {
-        let { data, error } = await supabase.from("images").select("id, description");
-
-        if (error) {
-          console.error("Error fetching text:", error);
-          return;
-        }
-
-        // Store text in an object with id as key
-        data.forEach(item => {
-          storedTexts[item.id] = item.description;
-        });
-
-        console.log("Text Data Loaded:", storedTexts); // Debugging info
-      }
-
-      // Fetch text on page load
-      fetchTextFromSupabase();
-
-      document.querySelector("a-scene").addEventListener("targetFound", (event) => {
-        const targetIndex = event.detail.index.toString(); // Get detected image index
-        const textEntity = document.getElementById("displayText");
-
-        if (storedTexts[targetIndex]) {
-          textEntity.setAttribute("value", storedTexts[targetIndex]);
-        } else {
-          textEntity.setAttribute("value", "No data found.");
-        }
+      document.querySelector("a-scene").addEventListener("targetFound", () => {
+        const video = document.getElementById("videoPlayer");
+        video.setAttribute("visible", "true"); // Show video
+        video.play(); // Play video
       });
 
       document.querySelector("a-scene").addEventListener("targetLost", () => {
-        const textEntity = document.getElementById("displayText");
-        textEntity.setAttribute("value", "Detecting...");
+        const video = document.getElementById("videoPlayer");
+        video.pause(); // Pause video
+        video.setAttribute("visible", "false"); // Hide video
       });
     </script>
   </body>
