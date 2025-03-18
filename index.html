@@ -9,8 +9,6 @@
     <a-scene mindar-image="imageTargetSrc: https://dhkyzhpqoreeytuyeioj.supabase.co/storage/v1/object/public/ar-content//targets.mind;" 
              color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
              vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-      
-    
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
@@ -21,8 +19,6 @@
         <!-- Lighting for better visibility -->
         <a-light type="directional" position="1 1 1" intensity="1.5"></a-light>
         <a-light type="ambient" intensity="0.5"></a-light>
-        
-        
       </a-entity>
     </a-scene>
     
@@ -48,10 +44,15 @@
         });
       }
       
-      // Fetch images on page load
-      fetchImagesFromSupabase();
-      
-      document.querySelector("a-scene").addEventListener("targetFound", (event) => {
+      // Ensure Supabase data is loaded before scanning
+      document.querySelector("a-scene").addEventListener("arReady", async () => {
+        console.log("MindAR is Ready! Fetching images...");
+        await fetchImagesFromSupabase();
+      });
+
+      // Update image and text when target is found
+      document.querySelector("a-entity[mindar-image-target]").addEventListener("targetFound", (event) => {
+        console.log("Target Found!", event.detail);
         const targetIndex = event.detail.index.toString(); // Get detected image index
         const textEntity = document.getElementById("displayText");
         const imageEntity = document.getElementById("displayImage");
@@ -64,6 +65,12 @@
           imageEntity.setAttribute("src", "");
         }
       });
+      
+      // Debugging: Check for unexpected 3D models
+      setTimeout(() => {
+        const objects = document.querySelectorAll("a-entity, a-gltf-model");
+        console.log("🔍 Found Objects in Scene:", objects);
+      }, 3000);
     </script>
   </body>
 </html>
