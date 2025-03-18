@@ -9,12 +9,11 @@
     <a-scene mindar-image="imageTargetSrc: https://dhkyzhpqoreeytuyeioj.supabase.co/storage/v1/object/public/ar-content//targets.mind;" 
              color-space="sRGB" renderer="colorManagement: true, physicallyCorrectLights" 
              vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-
+      
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
       <a-entity mindar-image-target="targetIndex: 0" id="targetEntity">
-        <a-plane id="displayImage" position="0 0.2 0" height="0.5" width="0.5"></a-plane>
-        <a-text id="displayText" value="" position="0 0.5 0" align="center" color="white" scale="0.5 0.5 0.5"></a-text>
+        <a-text id="displayText" value="" position="0 0.2 0" align="center" color="white" scale="1 1 1"></a-text>
         
         <!-- Lighting for better visibility -->
         <a-light type="directional" position="1 1 1" intensity="1.5"></a-light>
@@ -28,49 +27,35 @@
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoa3l6aHBxb3JlZXl0dXllaW9qIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDIwNjE4MjUsImV4cCI6MjA1NzYzNzgyNX0.8XJ5Jd4MX0bKRbJIjyypayz-yja5LsWmgzYIZGBxm2U";
       const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
       
-      let storedImages = {}; // This will hold image data from Supabase
+      let storedImages = {}; // This will hold text data from Supabase
       
-      async function fetchImagesFromSupabase() {
-        let { data, error } = await supabase.from("images").select("id, image_url, description");
+      async function fetchTextFromSupabase() {
+        let { data, error } = await supabase.from("images").select("id, description");
         
         if (error) {
-          console.error("Error fetching images:", error);
+          console.error("Error fetching text:", error);
           return;
         }
         
-        // Store images in an object with id as key
+        // Store text in an object with id as key
         data.forEach(item => {
-          storedImages[item.id] = { src: item.image_url, text: item.description };
+          storedImages[item.id] = item.description;
         });
       }
       
-      // Ensure Supabase data is loaded before scanning
-      document.querySelector("a-scene").addEventListener("arReady", async () => {
-        console.log("MindAR is Ready! Fetching images...");
-        await fetchImagesFromSupabase();
-      });
-
-      // Update image and text when target is found
-      document.querySelector("a-entity[mindar-image-target]").addEventListener("targetFound", (event) => {
-        console.log("Target Found!", event.detail);
+      // Fetch text on page load
+      fetchTextFromSupabase();
+      
+      document.querySelector("a-scene").addEventListener("targetFound", (event) => {
         const targetIndex = event.detail.index.toString(); // Get detected image index
         const textEntity = document.getElementById("displayText");
-        const imageEntity = document.getElementById("displayImage");
         
         if (storedImages[targetIndex]) {
-          textEntity.setAttribute("value", storedImages[targetIndex].text);
-          imageEntity.setAttribute("src", storedImages[targetIndex].src);
+          textEntity.setAttribute("value", storedImages[targetIndex]);
         } else {
           textEntity.setAttribute("value", "Unknown Image");
-          imageEntity.setAttribute("src", "");
         }
       });
-      
-      // Debugging: Check for unexpected 3D models
-      setTimeout(() => {
-        const objects = document.querySelectorAll("a-entity, a-gltf-model");
-        console.log("🔍 Found Objects in Scene:", objects);
-      }, 3000);
     </script>
   </body>
 </html>
